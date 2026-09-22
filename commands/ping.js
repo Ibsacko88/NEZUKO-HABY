@@ -53,13 +53,6 @@ ${pingColor(ping)} *Ping     :* \`${ping} ms\`
 🌐 *Node.js  :* \`${process.version}\`
 
 ━━━━━━━━━━━━━━━━━━━━━━
-💾 *RAM* — ${ramUsed}/${ramTotal} MB
-\`[${bar(parseInt(ramPct))}]\` *${ramPct}%*
-
-🖥️ *CPU Load* — ${cpu}
-\`[${bar(cpuPct)}]\` *~${cpuPct}%*
-
-━━━━━━━━━━━━━━━━━━━━━━
 ┌─────────────────────
 │ ✅ Statut  : *En ligne*
 │ 🌍 Mode    : *${settings.commandMode || 'Public'}*
