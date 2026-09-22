@@ -21,14 +21,14 @@ async function menuCommand(sock, chatId, message) {
                  𝐂𝐄𝐍𝐓𝐑𝐀-𝐇𝐄𝐗
 ╔══════𝗚𝗘𝗡𝗘𝗥𝗔𝗟══════>
 ║❒ menu → Affiche ce menu
-║❒ ping → Vitesse de réponse du bot
-║❒ owner → Contact du créateur et du propriétaire
-║❒ mode public/private → Change le mode d'accès au bot
-║❒ pair <numéro> → Génère un code de connexion WhatsApp
-║❒ mute [minutes] → Ferme le groupe (tape *unmute* pour rouvrir)
-║❒ antidelete on/off → Récupère les messages supprimés
-║❒ humm → Récupère un média vue-unique (en réponse)
-║❒ waouh → Récupère un média vue-unique (en réponse)
+║❒ ping → Vitesse du bot
+║❒ owner → Contact du propriétaire
+║❒ mode public/private 
+║❒ pair <numéro> → Génère un code
+║❒ mute [minutes] → Ferme le groupe
+║❒ antidelete → Récupère les messages 
+║❒ humm → Récupère hady
+║❒ waouh → Récupère nezuko 
 ╚══════════════════✰`;
 
     try {
