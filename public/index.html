@@ -3,27 +3,32 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="theme-color" content="#0a0508">
+<meta name="theme-color" content="#08040a">
 <title>NEZUKO · CENTRAL-HEX</title>
 <meta name="description" content="Connecte NEZUKO à ton WhatsApp — code de jumelage ou QR, en quelques secondes.">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🩸</text></svg>">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800;900&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
   :root{
-    --bg: #0a0508;
-    --bg-2: #120a10;
-    --panel: #180e15;
-    --panel-2: #1f131a;
-    --line: #3a2129;
-    --text: #f6ecee;
-    --muted: #a68891;
+    --bg: #08040a;
+    --bg-1: #0c0710;
+    --bg-2: #140b14;
+    --panel-solid: #180f1a;
+    --panel-2: #201422;
+    --line: #3c2436;
+    --line-soft: #2a1a28;
+    --text: #f7edf1;
+    --muted: #ab8d99;
+    --muted-dim: #6f5561;
     --rose: #ff5d7e;
-    --rose-dim: #b23a54;
-    --bamboo: #6fae7a;
-    --grad: linear-gradient(120deg, var(--rose), #ff8fab);
-    --radius: 20px;
+    --rose-2: #ff8fab;
+    --rose-deep: #c3355a;
+    --ember: #ffb454;
+    --grad: linear-gradient(120deg, var(--rose), var(--rose-2) 55%, var(--ember));
+    --radius: 22px;
+    --ease: cubic-bezier(.16,1,.3,1);
   }
   *{ box-sizing: border-box; }
   html{ scroll-behavior: smooth; }
@@ -32,241 +37,402 @@
     background: var(--bg);
     color: var(--text);
     font-family: 'Inter', ui-sans-serif, system-ui, sans-serif;
-    line-height: 1.55;
+    line-height: 1.6;
     -webkit-font-smoothing: antialiased;
     position: relative;
+    overflow-x: hidden;
   }
   .display{ font-family: 'Cinzel', serif; }
   a{ color: inherit; }
   button{ font: inherit; }
+  ::selection{ background: rgba(255,93,126,.32); color:#fff; }
 
+  #embers{ position: fixed; inset: 0; z-index: 0; pointer-events: none; }
   .bgfx{
     position: fixed; inset: 0; z-index: 0; pointer-events: none;
     background:
-      radial-gradient(ellipse 700px 500px at 12% -5%, rgba(255,93,126,.14), transparent 60%),
-      radial-gradient(ellipse 600px 500px at 92% 15%, rgba(124,31,46,.22), transparent 55%),
-      radial-gradient(ellipse 800px 600px at 50% 115%, rgba(111,174,122,.06), transparent 60%);
+      radial-gradient(ellipse 900px 620px at 15% -8%, rgba(255,93,126,.16), transparent 60%),
+      radial-gradient(ellipse 700px 600px at 100% 10%, rgba(195,53,90,.20), transparent 55%),
+      radial-gradient(ellipse 900px 700px at 50% 120%, rgba(111,174,122,.05), transparent 60%),
+      linear-gradient(180deg, var(--bg-1), var(--bg) 40%);
   }
-  .bgfx svg{ position:absolute; inset:0; width:100%; height:100%; opacity:.14; }
+  .bgfx svg{ position:absolute; inset:0; width:100%; height:100%; opacity:.10; }
+  .bamboo-line{ animation: sway 9s ease-in-out infinite; transform-origin: bottom center; }
+  .bamboo-line.b2{ animation-delay: -3s; }
+  .bamboo-line.b3{ animation-delay: -6s; }
+  @keyframes sway{ 0%,100%{ transform: rotate(-0.4deg); } 50%{ transform: rotate(0.4deg); } }
 
-  .wrap{ position:relative; z-index:1; max-width: 760px; margin: 0 auto; padding: 0 20px; }
+  .wrap{ position:relative; z-index:1; max-width: 860px; margin: 0 auto; padding: 0 22px; }
 
   header{
+    position: sticky; top: 0; z-index: 40;
+    backdrop-filter: blur(14px);
+    background: rgba(8,4,10,.62);
+    border-bottom: 1px solid var(--line-soft);
+  }
+  .header-inner{
+    max-width: 860px; margin: 0 auto; padding: 16px 22px;
     display:flex; align-items:center; justify-content:space-between;
-    padding: 26px 0 0;
   }
   .brand{ display:flex; align-items:center; gap:11px; }
   .brand-mark{
-    width:38px; height:38px; border-radius:11px; overflow:hidden; flex:none;
-    box-shadow: 0 0 0 1px var(--line), 0 10px 26px rgba(255,93,126,.18);
+    width:36px; height:36px; border-radius:10px; overflow:hidden; flex:none;
+    box-shadow: 0 0 0 1px var(--line), 0 8px 22px rgba(255,93,126,.22);
   }
   .brand-mark img{ width:100%; height:100%; object-fit:cover; display:block; }
-  .brand-name{ font-size:17px; font-weight:800; letter-spacing:.04em; }
-  .brand-name span{ color: var(--rose); }
+  .brand-name{ font-size:16px; font-weight:800; letter-spacing:.05em; }
   .chan-tag{
-    font-size:12px; color: var(--muted); border:1px solid var(--line);
-    padding:7px 13px; border-radius:999px; letter-spacing:.02em;
+    font-size:11.5px; color: var(--muted); border:1px solid var(--line);
+    padding:7px 13px; border-radius:999px; letter-spacing:.03em;
+    display:flex; align-items:center; gap:6px;
+  }
+  .chan-tag .pulse-dot{
+    width:6px; height:6px; border-radius:50%; background: var(--rose);
+    animation: pulse-ring 2s infinite;
+  }
+  @keyframes pulse-ring{
+    0%{ box-shadow: 0 0 0 0 rgba(255,93,126,.55); }
+    70%{ box-shadow: 0 0 0 7px rgba(255,93,126,0); }
+    100%{ box-shadow: 0 0 0 0 rgba(255,93,126,0); }
   }
 
-  .hero{ text-align:center; padding: 62px 0 26px; }
+  .hero{
+    display:flex; flex-direction:column; align-items:center; text-align:center;
+    padding: 58px 0 20px;
+  }
+  .portrait{
+    position: relative; width: 168px; height: 168px; margin-bottom: 30px;
+    animation: float-y 5s ease-in-out infinite;
+  }
+  @keyframes float-y{ 0%,100%{ transform: translateY(0); } 50%{ transform: translateY(-10px); } }
+  .portrait .halo{
+    position:absolute; inset:-22px; border-radius:50%;
+    background: conic-gradient(from 0deg, var(--rose), var(--ember), var(--rose-2), var(--rose));
+    filter: blur(18px); opacity:.55;
+    animation: spin 10s linear infinite;
+  }
+  @keyframes spin{ to{ transform: rotate(360deg); } }
+  .portrait .ring{
+    position:absolute; inset:-9px; border-radius:50%;
+    border: 1.5px solid rgba(255,143,171,.45);
+    animation: ring-pulse 3s var(--ease) infinite;
+  }
+  @keyframes ring-pulse{
+    0%,100%{ transform: scale(1); opacity:.7; }
+    50%{ transform: scale(1.08); opacity:.15; }
+  }
+  .portrait img{
+    position:relative; width:100%; height:100%; border-radius:50%; object-fit:cover;
+    box-shadow: 0 0 0 4px var(--bg), 0 0 0 5px rgba(255,93,126,.4), 0 30px 60px rgba(255,93,126,.15);
+  }
+
   .kanji-eyebrow{
     display:inline-flex; align-items:center; gap:8px;
     font-size:12.5px; color: var(--rose);
     background: rgba(255,93,126,.09);
     border: 1px solid rgba(255,93,126,.28);
-    padding: 6px 14px; border-radius: 999px;
+    padding: 7px 15px; border-radius: 999px;
     margin-bottom: 22px;
+    opacity:0; animation: rise .7s var(--ease) forwards; animation-delay:.05s;
   }
   h1{
-    font-size: 40px; line-height: 1.18; margin: 0 0 16px; font-weight: 800;
-    letter-spacing: .01em;
+    font-size: clamp(34px, 6vw, 50px); line-height: 1.14; margin: 0 0 18px; font-weight: 800;
+    letter-spacing: -.01em;
+    opacity:0; animation: rise .7s var(--ease) forwards; animation-delay:.15s;
   }
   h1 .accent{
     background: var(--grad); -webkit-background-clip:text; background-clip:text; color:transparent;
+    background-size: 200% 100%;
+    animation: shimmer 5s ease-in-out infinite;
   }
-  .hero p{ color: var(--muted); font-size:15.5px; max-width:460px; margin:0 auto; }
+  @keyframes shimmer{ 0%,100%{ background-position: 0% 50%; } 50%{ background-position: 100% 50%; } }
+  .hero p{
+    color: var(--muted); font-size:16px; max-width:480px; margin:0 auto;
+    opacity:0; animation: rise .7s var(--ease) forwards; animation-delay:.28s;
+  }
+  @keyframes rise{ from{ opacity:0; transform: translateY(14px); } to{ opacity:1; transform:none; } }
+
+  .hero-ctas{
+    display:flex; gap:12px; flex-wrap:wrap; justify-content:center; margin-top:30px;
+    opacity:0; animation: rise .7s var(--ease) forwards; animation-delay:.4s;
+  }
+  .btn-ghost-link{
+    padding:13px 22px; border-radius:12px; border:1px solid var(--line); color: var(--text);
+    font-weight:600; font-size:14px; text-decoration:none; transition: border-color .2s, background .2s, transform .15s;
+  }
+  .btn-ghost-link:hover{ border-color: var(--rose-deep); background: rgba(255,93,126,.06); transform: translateY(-1px); }
+  .btn-solid-link{
+    padding:13px 24px; border-radius:12px; border:none; background: var(--grad); color:#2a0510;
+    font-weight:700; font-size:14px; text-decoration:none; transition: filter .2s, transform .15s;
+  }
+  .btn-solid-link:hover{ filter:brightness(1.08); transform: translateY(-1px); }
+
+  .reveal{ opacity:0; transform: translateY(22px); transition: opacity .7s var(--ease), transform .7s var(--ease); }
+  .reveal.in{ opacity:1; transform:none; }
+
+  section{ padding: 50px 0; }
+  .section-label{
+    font-size: 12px; color: var(--rose); letter-spacing:.08em; text-transform:uppercase;
+    margin-bottom: 8px; text-align:center; font-weight:700;
+  }
+  h2{ font-size: clamp(22px,3.4vw,27px); margin: 0 0 8px; text-align:center; }
+  .section-intro{ color: var(--muted); font-size:14.5px; text-align:center; margin:0 auto 30px; max-width:50ch; }
+
+  .grid-features{ display:grid; grid-template-columns: repeat(3,1fr); gap: 14px; }
+  @media(max-width:720px){ .grid-features{ grid-template-columns: repeat(2,1fr); } }
+  @media(max-width:480px){ .grid-features{ grid-template-columns: 1fr; } }
+  .feature{
+    background: var(--panel-solid); border:1px solid var(--line-soft); border-radius:16px; padding:20px;
+    transition: transform .25s var(--ease), border-color .25s, box-shadow .25s;
+    position: relative; overflow:hidden;
+  }
+  .feature::before{
+    content:""; position:absolute; inset:0; opacity:0; transition: opacity .25s;
+    background: radial-gradient(circle at 30% 0%, rgba(255,93,126,.14), transparent 65%);
+  }
+  .feature:hover{ transform: translateY(-4px); border-color: var(--rose-deep); box-shadow: 0 18px 40px rgba(255,93,126,.10); }
+  .feature:hover::before{ opacity:1; }
+  .feature .icon{ font-size:21px; margin-bottom:11px; display:inline-block; }
+  .feature h3{ font-family:'Cinzel',serif; font-size:14.5px; margin:0 0 6px; position:relative; }
+  .feature p{ color: var(--muted); font-size:12.5px; line-height:1.55; margin:0; position:relative; }
 
   .card{
-    background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius);
-    padding: 26px; margin-top: 40px; box-shadow: 0 30px 80px rgba(0,0,0,.45);
+    background: var(--panel-solid); border: 1px solid var(--line-soft); border-radius: var(--radius);
+    padding: 28px; margin-top: 6px; box-shadow: 0 40px 90px rgba(0,0,0,.5);
     position: relative; overflow: hidden;
   }
   .card::before{
-    content:""; position:absolute; top:-40%; right:-20%; width:60%; height:180%;
-    background: radial-gradient(circle, rgba(255,93,126,.09), transparent 65%);
+    content:""; position:absolute; top:-45%; right:-25%; width:65%; height:190%;
+    background: radial-gradient(circle, rgba(255,93,126,.10), transparent 65%);
     pointer-events:none;
   }
   .tabs{
     position:relative; z-index:1;
-    display:flex; gap:5px; background: var(--bg-2); padding:5px; border-radius:13px; margin-bottom:22px;
+    display:flex; gap:0; background: var(--bg-2); padding:5px; border-radius:14px; margin-bottom:24px;
+  }
+  .tab-indicator{
+    position:absolute; top:5px; bottom:5px; left:5px; width: calc(50% - 5px);
+    background: var(--panel-2); border-radius:10px; box-shadow: inset 0 0 0 1px var(--line-soft);
+    transition: transform .3s var(--ease);
+    z-index:0;
   }
   .tab{
-    flex:1; text-align:center; padding: 11px 0; border-radius:10px; cursor:pointer;
+    flex:1; text-align:center; padding: 12px 0; border-radius:10px; cursor:pointer;
     color: var(--muted); font-weight:600; font-size:14px; border:none; background:transparent;
-    transition: background .18s, color .18s;
+    transition: color .2s; position:relative; z-index:1;
   }
-  .tab.active{ background: var(--panel-2); color: var(--text); box-shadow: inset 0 0 0 1px var(--line); }
+  .tab.active{ color: var(--text); }
 
   .field{ position:relative; z-index:1; }
-  label{ display:block; font-size:13px; color: var(--muted); margin-bottom:8px; }
+  label{ display:block; font-size:13px; color: var(--muted); margin-bottom:9px; font-weight:500; }
   input[type=tel]{
-    width:100%; background: var(--bg-2); border:1px solid var(--line); color: var(--text);
-    padding:14px 15px; border-radius:12px; font-size:16px; outline:none;
-    transition: border-color .18s;
+    width:100%; background: var(--bg-2); border:1.5px solid var(--line); color: var(--text);
+    padding:15px 16px; border-radius:13px; font-size:16.5px; outline:none;
+    transition: border-color .2s, box-shadow .2s; letter-spacing:.02em;
   }
-  input[type=tel]:focus{ border-color: var(--rose); }
-  .hint{ font-size:12px; color: var(--muted); margin-top:8px; }
+  input[type=tel]:focus{ border-color: var(--rose); box-shadow: 0 0 0 4px rgba(255,93,126,.12); }
+  .hint{ font-size:12px; color: var(--muted-dim); margin-top:9px; }
 
   .go-btn{
-    position:relative; z-index:1;
-    width:100%; margin-top:18px; padding:15px 0; border:none; border-radius:13px;
+    position:relative; z-index:1; overflow:hidden;
+    width:100%; margin-top:20px; padding:16px 0; border:none; border-radius:14px;
     background: var(--grad); color:#2a0510; font-weight:700; font-size:15px; cursor:pointer;
-    transition: filter .18s, transform .06s;
+    transition: filter .2s, transform .08s; letter-spacing:.02em;
   }
-  .go-btn:hover{ filter:brightness(1.08); }
-  .go-btn:active{ transform:scale(.99); }
+  .go-btn::after{
+    content:""; position:absolute; inset:0; background: linear-gradient(120deg, transparent, rgba(255,255,255,.35), transparent);
+    transform: translateX(-120%); transition: transform .6s;
+  }
+  .go-btn:hover::after{ transform: translateX(120%); }
+  .go-btn:hover{ filter:brightness(1.06); }
+  .go-btn:active{ transform:scale(.985); }
   .go-btn:disabled{ opacity:.55; cursor:not-allowed; }
 
   .result{
     position:relative; z-index:1;
-    display:none; margin-top:22px; padding:22px; border-radius:15px;
-    background: var(--bg-2); border:1px dashed var(--rose-dim); text-align:center;
+    display:none; margin-top:24px; padding:24px; border-radius:16px;
+    background: var(--bg-2); border:1px dashed var(--rose-deep); text-align:center;
   }
-  .result.show{ display:block; }
+  .result.show{ display:block; animation: pop-in .4s var(--ease); }
+  @keyframes pop-in{ from{ opacity:0; transform: scale(.96); } to{ opacity:1; transform:none; } }
   .result-value{
-    font-family:'Cinzel', serif; font-size:27px; font-weight:700; letter-spacing:.09em;
-    color: var(--text); min-height:36px; word-break: break-all;
+    font-family:'Cinzel', serif; font-size:29px; font-weight:700; letter-spacing:.1em;
+    color: var(--text); min-height:38px; word-break: break-all;
   }
-  .result p{ color: var(--muted); font-size:13px; margin:14px 0 0; }
-  .result img{ border-radius:10px; background:#fff; padding:8px; }
+  .result p{ color: var(--muted); font-size:13px; margin:15px 0 0; }
+  .result img{ border-radius:12px; background:#fff; padding:10px; }
+
+  .waiting-dots span{
+    display:inline-block; width:5px; height:5px; border-radius:50%; background: var(--rose);
+    margin:0 2px; animation: dot-bounce 1.2s infinite ease-in-out;
+  }
+  .waiting-dots span:nth-child(2){ animation-delay:.15s; }
+  .waiting-dots span:nth-child(3){ animation-delay:.3s; }
+  @keyframes dot-bounce{ 0%,80%,100%{ transform: scale(.6); opacity:.4; } 40%{ transform: scale(1); opacity:1; } }
 
   .reset-btn{
     background: rgba(255,93,126,.08); color: var(--rose); border:1px solid rgba(255,93,126,.32);
-    padding:10px 18px; border-radius:10px; cursor:pointer; font-weight:600; font-size:13px;
+    padding:11px 20px; border-radius:11px; cursor:pointer; font-weight:600; font-size:13px;
+    transition: background .2s;
   }
+  .reset-btn:hover{ background: rgba(255,93,126,.16); }
 
-  .steps{ margin-top: 54px; }
-  .steps h2{ font-size:21px; margin-bottom:22px; text-align:center; }
-  .step-list{ display:grid; gap:13px; }
+  .step-list{ display:grid; gap:12px; position:relative; }
   .step{
-    display:flex; gap:14px; align-items:flex-start; background: var(--panel);
-    border:1px solid var(--line); border-radius:14px; padding:16px 18px;
+    display:flex; gap:15px; align-items:flex-start; background: var(--panel-solid);
+    border:1px solid var(--line-soft); border-radius:15px; padding:17px 19px;
+    transition: transform .2s var(--ease), border-color .2s;
   }
+  .step:hover{ transform: translateX(4px); border-color: var(--rose-deep); }
   .step-num{
-    width:27px; height:27px; border-radius:8px; flex:none;
+    width:28px; height:28px; border-radius:9px; flex:none;
     background: rgba(255,93,126,.12); color: var(--rose); font-weight:700; font-size:13px;
-    display:grid; place-items:center;
+    display:grid; place-items:center; font-family:'Cinzel',serif;
   }
   .step-text b{ color: var(--text); }
   .step-text{ color: var(--muted); font-size:14px; }
 
-  .cmds{ margin-top:54px; }
-  .cmds h2{ font-size:21px; margin-bottom:6px; text-align:center; }
-  .cmds .sub{ text-align:center; color:var(--muted); font-size:13.5px; margin-bottom:24px; }
-  .cmd-grid{ display:grid; grid-template-columns: repeat(3,1fr); gap:10px; }
+  .cmd-grid{ display:grid; grid-template-columns: repeat(3,1fr); gap:11px; }
   .cmd-chip{
-    background: var(--panel); border:1px solid var(--line); border-radius:12px;
-    padding:12px 10px; text-align:center;
+    background: var(--panel-solid); border:1px solid var(--line-soft); border-radius:13px;
+    padding:14px 11px; text-align:center;
+    transition: transform .2s var(--ease), border-color .2s, background .2s;
   }
-  .cmd-chip b{ font-family:'Cinzel', serif; font-size:13px; color: var(--rose); }
-  .cmd-chip p{ margin:5px 0 0; font-size:11px; color: var(--muted); line-height:1.4; }
+  .cmd-chip:hover{ transform: translateY(-3px); border-color: var(--rose-deep); background: var(--panel-2); }
+  .cmd-chip b{ font-family:'Cinzel', serif; font-size:13.5px; color: var(--rose); }
+  .cmd-chip p{ margin:6px 0 0; font-size:11px; color: var(--muted); line-height:1.4; }
   @media(max-width:560px){ .cmd-grid{ grid-template-columns: repeat(2,1fr); } }
 
   footer{
-    margin: 66px 0 40px; padding-top:24px; border-top:1px solid var(--line);
+    margin-top: 30px; padding: 26px 0 40px; border-top:1px solid var(--line-soft);
     display:flex; flex-wrap:wrap; gap:12px; justify-content:space-between; align-items:center;
     color: var(--muted); font-size:12.5px;
   }
   footer .credit b{ color: var(--text); }
   footer .system{ display:inline-flex; align-items:center; gap:6px; font-weight:600; color: var(--rose); }
 
+  @media(prefers-reduced-motion: reduce){
+    *{ animation-duration: 0.001ms !important; animation-iteration-count: 1 !important; transition-duration: 0.001ms !important; }
+  }
+
   @media(max-width:560px){
-    h1{ font-size:31px; }
-    .card{ padding:19px; }
-    .result-value{ font-size:22px; }
+    .card{ padding:20px; }
+    .result-value{ font-size:23px; }
+    .portrait{ width:130px; height:130px; }
   }
 </style>
 </head>
 <body>
 
+<canvas id="embers"></canvas>
 <div class="bgfx">
   <svg viewBox="0 0 800 900" preserveAspectRatio="xMidYMid slice">
-    <defs>
-      <pattern id="bamboo" width="120" height="220" patternUnits="userSpaceOnUse">
-        <line x1="20" y1="0" x2="20" y2="220" stroke="#ff5d7e" stroke-width="2"/>
-        <line x1="20" y1="30" x2="34" y2="30" stroke="#ff5d7e" stroke-width="2"/>
-        <line x1="20" y1="95" x2="6" y2="95" stroke="#ff5d7e" stroke-width="2"/>
-        <line x1="20" y1="160" x2="34" y2="160" stroke="#ff5d7e" stroke-width="2"/>
-        <line x1="100" y1="0" x2="100" y2="220" stroke="#6fae7a" stroke-width="2"/>
-        <line x1="100" y1="60" x2="86" y2="60" stroke="#6fae7a" stroke-width="2"/>
-        <line x1="100" y1="130" x2="114" y2="130" stroke="#6fae7a" stroke-width="2"/>
-      </pattern>
-    </defs>
-    <rect width="100%" height="100%" fill="url(#bamboo)"/>
+    <g class="bamboo-line b1"><line x1="90" y1="0" x2="90" y2="900" stroke="#ff5d7e" stroke-width="2"/><line x1="90" y1="120" x2="112" y2="120" stroke="#ff5d7e" stroke-width="2"/><line x1="90" y1="340" x2="66" y2="340" stroke="#ff5d7e" stroke-width="2"/><line x1="90" y1="560" x2="112" y2="560" stroke="#ff5d7e" stroke-width="2"/></g>
+    <g class="bamboo-line b2"><line x1="720" y1="0" x2="720" y2="900" stroke="#6fae7a" stroke-width="2"/><line x1="720" y1="200" x2="696" y2="200" stroke="#6fae7a" stroke-width="2"/><line x1="720" y1="460" x2="744" y2="460" stroke="#6fae7a" stroke-width="2"/></g>
+    <g class="bamboo-line b3"><line x1="400" y1="0" x2="400" y2="900" stroke="#ff8fab" stroke-width="1.5"/><line x1="400" y1="260" x2="424" y2="260" stroke="#ff8fab" stroke-width="1.5"/><line x1="400" y1="620" x2="376" y2="620" stroke="#ff8fab" stroke-width="1.5"/></g>
   </svg>
 </div>
 
-<div class="wrap">
-
-  <header>
+<header>
+  <div class="header-inner">
     <div class="brand">
       <div class="brand-mark"><img src="https://i.ibb.co/7NyMLkMq/IMG-20260921-WA0562.jpg" alt="NEZUKO"></div>
       <span class="brand-name display">NEZUKO</span>
     </div>
-    <span class="chan-tag">💎 CENTRAL-HEX</span>
-  </header>
+    <span class="chan-tag"><span class="pulse-dot"></span> CENTRAL-HEX</span>
+  </div>
+</header>
+
+<div class="wrap">
 
   <section class="hero">
+    <div class="portrait">
+      <div class="halo"></div>
+      <div class="ring"></div>
+      <img src="https://i.ibb.co/7NyMLkMq/IMG-20260921-WA0562.jpg" alt="NEZUKO">
+    </div>
+
     <div class="kanji-eyebrow">🩸 Sans préfixe · tape simplement <b>menu</b></div>
     <h1 class="display">Réveille <span class="accent">NEZUKO</span><br>sur ton WhatsApp</h1>
-    <p>Entre ton numéro, récupère ton code, colle-le dans WhatsApp. Ton bot est actif en moins d'une minute.</p>
+    <p>Entre ton numéro, récupère ton code, colle-le dans WhatsApp. Ton bot est actif en moins d'une minute — aucun panel, aucune installation.</p>
+
+    <div class="hero-ctas">
+      <a href="#session" class="btn-solid-link">✨ Connecter maintenant</a>
+      <a href="#cmds" class="btn-ghost-link">Voir les commandes</a>
+    </div>
   </section>
 
-  <div class="card" id="session">
-    <div class="tabs">
-      <button class="tab active" id="pairTab" onclick="switchMethod('pair')">🔑 Code PAIR</button>
-      <button class="tab" id="qrTab" onclick="switchMethod('qr')">▣ QR Code</button>
+  <section class="reveal" id="session">
+    <div class="section-label">// Connexion</div>
+    <h2 class="display">Génère ta session</h2>
+    <p class="section-intro">Choisis ta méthode de connexion préférée.</p>
+
+    <div class="card">
+      <div class="tabs">
+        <div class="tab-indicator" id="tabIndicator"></div>
+        <button class="tab active" id="pairTab" onclick="switchMethod('pair')">🔑 Code PAIR</button>
+        <button class="tab" id="qrTab" onclick="switchMethod('qr')">▣ QR Code</button>
+      </div>
+
+      <div class="field" id="pairFields">
+        <label for="phone">Numéro WhatsApp (avec indicatif pays, sans le +)</label>
+        <input type="tel" id="phone" placeholder="Ex : 224664014102" inputmode="numeric">
+        <p class="hint">Format international complet — 224 pour la Guinée, 33 pour la France, etc.</p>
+      </div>
+
+      <button class="go-btn" id="generateBtn" onclick="generateSession()">✨ OBTENIR LE CODE</button>
+
+      <div class="result" id="result">
+        <div class="result-value" id="sessionValue">
+          <span class="waiting-dots"><span></span><span></span><span></span></span>
+        </div>
+        <p id="resultText">Patiente quelques secondes…</p>
+      </div>
     </div>
+  </section>
 
-    <div class="field" id="pairFields">
-      <label for="phone">Numéro WhatsApp (avec indicatif pays, sans le +)</label>
-      <input type="tel" id="phone" placeholder="Ex : 224664014102" inputmode="numeric">
-      <p class="hint">Format international complet — 224 pour la Guinée, 33 pour la France, etc.</p>
-    </div>
-
-    <button class="go-btn" id="generateBtn" onclick="generateSession()">✨ OBTENIR LE CODE</button>
-
-    <div class="result" id="result">
-      <div class="result-value" id="sessionValue">⏳</div>
-      <p id="resultText">Patiente quelques secondes…</p>
-    </div>
-  </div>
-
-  <section class="steps">
+  <section class="reveal">
+    <div class="section-label">// Étapes</div>
     <h2 class="display">Comment ça marche</h2>
+    <p class="section-intro">Quatre étapes, sans quitter cette page.</p>
     <div class="step-list">
       <div class="step">
-        <div class="step-num">1</div>
+        <div class="step-num">01</div>
         <div class="step-text"><b>Génère ton code</b> — entre ton numéro (ou choisis le QR) puis lance la génération.</div>
       </div>
       <div class="step">
-        <div class="step-num">2</div>
+        <div class="step-num">02</div>
         <div class="step-text"><b>Ouvre WhatsApp</b> — Réglages ⋮ → Appareils liés → Lier un appareil.</div>
       </div>
       <div class="step">
-        <div class="step-num">3</div>
+        <div class="step-num">03</div>
         <div class="step-text"><b>Lie ton compte</b> — « Lier avec un numéro de téléphone » puis entre le code, ou scanne le QR.</div>
       </div>
       <div class="step">
-        <div class="step-num">4</div>
+        <div class="step-num">04</div>
         <div class="step-text"><b>C'est prêt</b> — tape <b>menu</b> dans une conversation pour voir toutes les commandes.</div>
       </div>
     </div>
   </section>
 
-  <section class="cmds">
+  <section class="reveal">
+    <div class="section-label">// Fonctionnalités</div>
+    <h2 class="display">Pensé pour être utilisé sans friction</h2>
+    <p class="section-intro">Un bot léger, direct, sans configuration compliquée.</p>
+    <div class="grid-features">
+      <article class="feature"><div class="icon">⚡</div><h3>Sans préfixe</h3><p>Tape directement "menu", "ping", "mute"… pas de symbole à retenir.</p></article>
+      <article class="feature"><div class="icon">🔑</div><h3>Connexion instantanée</h3><p>Code de jumelage ou QR — actif en quelques secondes, sans panel.</p></article>
+      <article class="feature"><div class="icon">🩸</div><h3>Anti-suppression</h3><p>Récupère et te renvoie les messages supprimés du chat.</p></article>
+      <article class="feature"><div class="icon">👁️</div><h3>Vues uniques</h3><p>Capture les médias vue-unique et te les renvoie en privé.</p></article>
+      <article class="feature"><div class="icon">🔇</div><h3>Modération</h3><p>Ferme et rouvre tes groupes à la demande avec mute/unmute.</p></article>
+      <article class="feature"><div class="icon">🔒</div><h3>Sécurisé</h3><p>Ta session reste privée — rien n'est partagé avec des tiers.</p></article>
+    </div>
+  </section>
+
+  <section class="reveal" id="cmds">
+    <div class="section-label">// Commandes</div>
     <h2 class="display">Ce que NEZUKO sait faire</h2>
-    <p class="sub">9 commandes, sans préfixe.</p>
+    <p class="section-intro">9 commandes, sans préfixe.</p>
     <div class="cmd-grid">
       <div class="cmd-chip"><b>menu</b><p>Affiche le menu</p></div>
       <div class="cmd-chip"><b>ping</b><p>Vitesse du bot</p></div>
@@ -288,9 +454,56 @@
 </div>
 
 <script>
+  (function embers(){
+    const canvas = document.getElementById('embers');
+    const ctx = canvas.getContext('2d');
+    let w, h, particles;
+    const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    function resize(){
+      w = canvas.width = window.innerWidth;
+      h = canvas.height = Math.min(window.innerHeight, 1400);
+    }
+    function makeParticles(){
+      const count = Math.min(46, Math.floor(w / 26));
+      particles = Array.from({length: count}, () => ({
+        x: Math.random() * w,
+        y: Math.random() * h,
+        r: Math.random() * 1.8 + 0.6,
+        speedY: Math.random() * 0.35 + 0.12,
+        speedX: (Math.random() - 0.5) * 0.25,
+        alpha: Math.random() * 0.5 + 0.15,
+        hue: Math.random() > 0.5 ? '255,93,126' : '255,180,84'
+      }));
+    }
+    function tick(){
+      ctx.clearRect(0, 0, w, h);
+      for (const p of particles){
+        p.y -= p.speedY;
+        p.x += p.speedX;
+        if (p.y < -10){ p.y = h + 10; p.x = Math.random() * w; }
+        ctx.beginPath();
+        ctx.fillStyle = `rgba(${p.hue},${p.alpha})`;
+        ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      if (!reduced) requestAnimationFrame(tick);
+    }
+    resize();
+    makeParticles();
+    window.addEventListener('resize', () => { resize(); makeParticles(); });
+    if (!reduced) requestAnimationFrame(tick);
+    else tick();
+  })();
+
+  const revealEls = document.querySelectorAll('.reveal');
+  const io = new IntersectionObserver((entries) => {
+    entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('in'); });
+  }, { threshold: 0.12 });
+  revealEls.forEach(el => io.observe(el));
+
   let method = "pair";
   let pollTimer = null;
-  let currentNumber = "";
 
   function stopPoll(){ if (pollTimer) clearInterval(pollTimer); }
 
@@ -301,6 +514,8 @@
     document.getElementById("pairFields").style.display = type==="pair" ? "block" : "none";
     document.getElementById("generateBtn").textContent =
       type==="pair" ? "✨ OBTENIR LE CODE" : "▣ GÉNÉRER LE QR CODE";
+    document.getElementById("tabIndicator").style.transform =
+      type==="pair" ? "translateX(0)" : "translateX(100%)";
     document.getElementById("result").classList.remove("show");
     stopPoll();
   }
@@ -336,9 +551,8 @@
         alert("Entre un numéro WhatsApp valide avec l'indicatif pays.");
         return;
       }
-      currentNumber = phone;
 
-      value.innerHTML = "⏳";
+      value.innerHTML = '<span class="waiting-dots"><span></span><span></span><span></span></span>';
       text.textContent = "Génération du code…";
       btn.disabled = true;
 
@@ -366,7 +580,7 @@
               const rdata = await rr.json();
               if (rdata.ok) {
                 value.innerHTML = "🔌";
-                text.textContent = "Déconnecté. Clique à nouveau sur \\"Obtenir le code\\" pour relancer un pairing.";
+                text.textContent = "Déconnecté. Clique à nouveau sur \"Obtenir le code\" pour relancer un pairing.";
               } else {
                 text.textContent = "❌ " + (rdata.error || "Erreur lors de la déconnexion.");
               }
@@ -396,7 +610,7 @@
       }
 
     } else {
-      value.innerHTML = "⏳";
+      value.innerHTML = '<span class="waiting-dots"><span></span><span></span><span></span></span>';
       text.textContent = "Génération du QR…";
       btn.disabled = true;
 
