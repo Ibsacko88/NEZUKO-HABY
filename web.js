@@ -239,17 +239,6 @@ app.get('/', (req, res) => {
 });
 
 // ── Demander un code de pairing pour un numéro ──
-// Limite à 1 seule session WhatsApp active à la fois — protège la RAM du
-// serveur (512 Mo sur Render free). Change MAX_SESSIONS dans le .env si tu
-// passes sur un plan avec plus de mémoire.
-const MAX_CONCURRENT_SESSIONS = parseInt(process.env.MAX_SESSIONS || '1', 10);
-
-function countActiveSessions(excludeId) {
-    return Object.entries(sessions).filter(([id, s]) =>
-        id !== excludeId && (s.status === 'connected' || s.status === 'waiting_code' || s.status === 'waiting_qr' || s.status === 'requesting_code')
-    ).length;
-}
-
 app.post('/api/pair', async (req, res) => {
     try {
         const { number } = req.body;
@@ -259,13 +248,6 @@ app.post('/api/pair', async (req, res) => {
         }
 
         const sessionId = sanitizeId(cleanNumber);
-
-        if (countActiveSessions(sessionId) >= MAX_CONCURRENT_SESSIONS) {
-            return res.status(429).json({
-                error: `Une session est déjà active. Déconnecte-la d'abord depuis le dashboard admin (/admin) avant d'en connecter une nouvelle — ceci protège la mémoire du serveur.`
-            });
-        }
-
         await startUserSession(cleanNumber, { usePairingCode: true });
 
         let tries = 0;
@@ -287,11 +269,6 @@ app.post('/api/pair', async (req, res) => {
 // ── Démarrer une session en mode QR ──
 app.post('/api/qr', async (req, res) => {
     try {
-        if (countActiveSessions(null) >= MAX_CONCURRENT_SESSIONS) {
-            return res.status(429).json({
-                error: `Une session est déjà active. Déconnecte-la d'abord depuis le dashboard admin (/admin) avant d'en connecter une nouvelle — ceci protège la mémoire du serveur.`
-            });
-        }
         const sessionId = `qr_${Date.now()}`;
         await startUserSession(sessionId, { usePairingCode: false });
         res.json({ sessionId });
@@ -341,141 +318,6 @@ app.get('/health', (req, res) => {
     res.json({ ok: true, bot: 'NEZUKO', sessions: Object.keys(sessions).length, uptime: process.uptime() });
 });
 
-// ═══════════════════════════════════════════════════════════
-// 🛡️ DASHBOARD ADMIN — protégé par mot de passe (.env: ADMIN_PASSWORD)
-// ═══════════════════════════════════════════════════════════
-const crypto = require('crypto');
-const { isInMaintenance, setMaintenanceMode } = require('./commands/maintenance');
-const { performUpdate } = require('./commands/update');
-
-const adminTokens = new Map(); // token -> expiry (ms)
-const ADMIN_TOKEN_TTL = 12 * 60 * 60 * 1000; // 12h
-const MODE_FILE = path.join(__dirname, 'data', 'messageCount.json');
-
-function parseCookies(req) {
-    const header = req.headers.cookie;
-    const out = {};
-    if (!header) return out;
-    header.split(';').forEach(pair => {
-        const idx = pair.indexOf('=');
-        if (idx === -1) return;
-        out[pair.slice(0, idx).trim()] = decodeURIComponent(pair.slice(idx + 1).trim());
-    });
-    return out;
-}
-
-function requireAdmin(req, res, next) {
-    const token = parseCookies(req).admin_token;
-    const expiry = token && adminTokens.get(token);
-    if (!expiry || Date.now() > expiry) {
-        return res.status(401).json({ error: 'Non authentifié.' });
-    }
-    adminTokens.set(token, Date.now() + ADMIN_TOKEN_TTL); // prolonge la session active
-    next();
-}
-
-function readMode() {
-    try {
-        const d = JSON.parse(fs.readFileSync(MODE_FILE));
-        return typeof d.isPublic === 'boolean' ? d.isPublic : true;
-    } catch { return true; }
-}
-function writeMode(isPublic) {
-    let d = {};
-    try { d = JSON.parse(fs.readFileSync(MODE_FILE)); } catch {}
-    d.isPublic = isPublic;
-    fs.mkdirSync(path.dirname(MODE_FILE), { recursive: true });
-    fs.writeFileSync(MODE_FILE, JSON.stringify(d, null, 2));
-}
-
-app.get('/admin', (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'admin.html'));
-});
-
-app.post('/api/admin/login', (req, res) => {
-    const { password } = req.body || {};
-    const real = process.env.ADMIN_PASSWORD;
-    if (!real) return res.status(500).json({ error: "ADMIN_PASSWORD n'est pas configuré dans le .env du serveur." });
-    if (!password || password !== real) return res.status(401).json({ error: 'Mot de passe incorrect.' });
-
-    const token = crypto.randomBytes(32).toString('hex');
-    adminTokens.set(token, Date.now() + ADMIN_TOKEN_TTL);
-    res.setHeader('Set-Cookie', `admin_token=${token}; HttpOnly; Path=/; Max-Age=${ADMIN_TOKEN_TTL / 1000}; SameSite=Lax`);
-    res.json({ ok: true });
-});
-
-app.post('/api/admin/logout', (req, res) => {
-    const token = parseCookies(req).admin_token;
-    if (token) adminTokens.delete(token);
-    res.setHeader('Set-Cookie', 'admin_token=; Path=/; Max-Age=0');
-    res.json({ ok: true });
-});
-
-app.get('/api/admin/status', requireAdmin, (req, res) => {
-    const sessionList = Object.entries(sessions).map(([id, s]) => ({
-        id, status: s.status, number: s.number || null
-    }));
-    res.json({
-        botName: global.botname,
-        version: settings.version || '2.0.0',
-        nodeVersion: process.version,
-        uptimeSeconds: Math.floor(process.uptime()),
-        memoryMB: Math.round(process.memoryUsage().rss / 1024 / 1024),
-        isPublic: readMode(),
-        maintenance: isInMaintenance(),
-        sessions: sessionList
-    });
-});
-
-app.post('/api/admin/mode', requireAdmin, (req, res) => {
-    const { isPublic } = req.body || {};
-    if (typeof isPublic !== 'boolean') return res.status(400).json({ error: 'isPublic doit être true ou false.' });
-    writeMode(isPublic);
-    res.json({ ok: true, isPublic });
-});
-
-app.post('/api/admin/maintenance', requireAdmin, (req, res) => {
-    const { enabled } = req.body || {};
-    if (typeof enabled !== 'boolean') return res.status(400).json({ error: 'enabled doit être true ou false.' });
-    const result = setMaintenanceMode(enabled);
-    res.json({ ok: true, maintenance: result });
-});
-
-app.post('/api/admin/restart', requireAdmin, (req, res) => {
-    res.json({ ok: true, message: 'Redémarrage en cours...' });
-    const { scheduleRestart } = require('./commands/update');
-    scheduleRestart(1000);
-});
-
-let updateState = { step: 'idle', message: '', error: null };
-
-app.post('/api/admin/update', requireAdmin, (req, res) => {
-    const { zipUrl } = req.body || {};
-    if (!zipUrl || !zipUrl.startsWith('http')) {
-        return res.status(400).json({ error: 'zipUrl invalide — colle le lien complet du zip.' });
-    }
-    if (['downloading', 'extracting', 'replacing'].includes(updateState.step)) {
-        return res.status(409).json({ error: 'Une mise à jour est déjà en cours.' });
-    }
-    const labels = {
-        downloading: 'Téléchargement du zip...',
-        extracting: 'Extraction des fichiers...',
-        replacing: 'Remplacement des anciens fichiers...',
-        restarting: 'Redémarrage du bot...'
-    };
-    updateState = { step: 'downloading', message: labels.downloading, error: null };
-    performUpdate(zipUrl, (step) => {
-        updateState = { step, message: labels[step] || step, error: null };
-    }).catch(err => {
-        updateState = { step: 'error', message: err.message, error: err.message };
-    });
-    res.json({ started: true });
-});
-
-app.get('/api/admin/update/status', requireAdmin, (req, res) => {
-    res.json(updateState);
-});
-
 app.listen(PORT, () => {
     console.log(`🩸 NEZUKO — serveur de pairing lancé sur http://localhost:${PORT}`);
     resumeAllSessions().catch(e => console.error('resumeAllSessions error:', e.message));
@@ -509,5 +351,3 @@ function startSelfPing() {
 }
 
 process.on('uncaughtException', (err) => console.error('Uncaught Exception:', err));
-
-
